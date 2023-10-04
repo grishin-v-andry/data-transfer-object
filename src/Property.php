@@ -249,8 +249,12 @@ class Property extends ReflectionProperty
             return true;
         }
 
+        $typeFromMapping = array_key_exists($type, self::$typeMapping)
+            ? self::$typeMapping[$type]
+            : $type;
+
         return $value instanceof $type
-            || gettype($value) === (self::$typeMapping[$type] ?? $type);
+            || gettype($value) === $typeFromMapping;
     }
 
     /**

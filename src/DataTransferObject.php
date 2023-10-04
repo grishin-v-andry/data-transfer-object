@@ -42,7 +42,9 @@ abstract class DataTransferObject
                 throw DataTransferObjectError::uninitialized($property);
             }
 
-            $value = $parameters[$property->getName()] ?? $property->getValue($this);
+            $value = array_key_exists($property->getName(), $parameters)
+                ? $parameters[$property->getName()]
+                : $property->getValue($this);
 
             $property->set($value);
 

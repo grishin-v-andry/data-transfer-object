@@ -6,7 +6,10 @@ use Spatie\DataTransferObject\DataTransferObjectCollection;
 
 class NestedParentCollection extends DataTransferObjectCollection
 {
-    public function current(): NestedChildCollection
+    /**
+     * @return NestedChildCollection
+     */
+    public function current()
     {
         return parent::current();
     }
