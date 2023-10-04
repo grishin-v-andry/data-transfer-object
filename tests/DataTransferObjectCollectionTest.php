@@ -7,6 +7,7 @@ use Spatie\DataTransferObject\Tests\TestClasses\NestedParent;
 use Spatie\DataTransferObject\Tests\TestClasses\NestedChildCollection;
 use Spatie\DataTransferObject\Tests\TestClasses\NestedParentCollection;
 use Spatie\DataTransferObject\Tests\TestClasses\TestDataTransferObject;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\EmptyDataTransferObjectCollection;
 
 class DataTransferObjectCollectionTest extends TestCase
 {
@@ -19,8 +20,7 @@ class DataTransferObjectCollectionTest extends TestCase
             new TestDataTransferObject(['testProperty' => 3]),
         ];
 
-        $list = new class($objects) extends DataTransferObjectCollection {
-        };
+        $list = new EmptyDataTransferObjectCollection($objects);
 
         $this->assertCount(3, $list);
     }
@@ -34,8 +34,7 @@ class DataTransferObjectCollectionTest extends TestCase
             new TestDataTransferObject(['testProperty' => 3]),
         ];
 
-        $collection = new class($objects) extends DataTransferObjectCollection {
-        };
+        $collection = new EmptyDataTransferObjectCollection($objects);
 
         $this->assertCount(3, $collection->items());
     }

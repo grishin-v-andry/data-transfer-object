@@ -2,7 +2,6 @@
 
 namespace Spatie\DataTransferObject\Tests;
 
-use Spatie\DataTransferObject\DataTransferObject;
 use Spatie\DataTransferObject\DataTransferObjectError;
 use Spatie\DataTransferObject\Tests\TestClasses\DummyClass;
 use Spatie\DataTransferObject\Tests\TestClasses\EmptyChild;
@@ -10,39 +9,53 @@ use Spatie\DataTransferObject\Tests\TestClasses\OtherClass;
 use Spatie\DataTransferObject\Tests\TestClasses\NestedChild;
 use Spatie\DataTransferObject\Tests\TestClasses\NestedParent;
 use Spatie\DataTransferObject\Tests\TestClasses\NestedParentOfMany;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\OnlyTheTypeHintedTypeMayBePassed;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\UnionTypesAreSupported;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\NullableTypesAreSupported;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\DefaultValuesAreSupported;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\NullIsAllowedOnlyIfExplicitlySpecified;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\UnknownPropertiesThrowAnError;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\UnknownPropertiesShowAComprehensiveErrorMessage;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\OnlyReturnsFilteredProperties;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\ExceptReturnsFilteredProperties;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\AllReturnsAllProperties;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\MixedIsSupported;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\FloatIsSupported;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\ClassesAreSupported;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\GenericCollectionsAreSupported;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\AnExceptionIsThrownForAGenericCollectionOfNull;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\AnExceptionIsThrownWhenPropertyWasNotInitialised;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\EmptyTypeDeclarationAllowsEverything;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\NestedDtosAreRecursiveCastFromObjectTAarrayWhenToArray;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\NestedArrayDtosAreRecursiveCastToArraysOfDtos;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\NestedArrayDtosCanBeNullable;
+use Spatie\DataTransferObject\Tests\DataTransferTransferObjectTestClasses\EmptyDtoObjectsCanBeCastUsingArrays;
 
 class DataTransferObjectTest extends TestCase
 {
+
     /** @test */
     public function only_the_type_hinted_type_may_be_passed()
     {
-        new class(['foo' => 'value']) extends DataTransferObject {
-            /** @var string */
-            public $foo;
-        };
+        new OnlyTheTypeHintedTypeMayBePassed([
+            'foo' => 'value',
+        ]);
 
         $this->markTestSucceeded();
 
         $this->expectException(DataTransferObjectError::class);
 
-        new class(['foo' => false]) extends DataTransferObject {
-            /** @var string */
-            public $foo;
-        };
+        new OnlyTheTypeHintedTypeMayBePassed([
+            'foo' => false,
+        ]);
     }
 
     /** @test */
     public function union_types_are_supported()
     {
-        new class(['foo' => 'value']) extends DataTransferObject {
-            /** @var string|bool */
-            public $foo;
-        };
+        new UnionTypesAreSupported(['foo' => 'value']);
 
-        new class(['foo' => false]) extends DataTransferObject {
-            /** @var string|bool */
-            public $foo;
-        };
+        new UnionTypesAreSupported(['foo' => false]);
 
         $this->markTestSucceeded();
     }
@@ -50,10 +63,7 @@ class DataTransferObjectTest extends TestCase
     /** @test */
     public function nullable_types_are_supported()
     {
-        new class(['foo' => null]) extends DataTransferObject {
-            /** @var string|null */
-            public $foo;
-        };
+        new NullableTypesAreSupported(['foo' => null]);
 
         $this->markTestSucceeded();
     }
@@ -61,13 +71,7 @@ class DataTransferObjectTest extends TestCase
     /** @test */
     public function default_values_are_supported()
     {
-        $valueObject = new class(['bar' => true]) extends DataTransferObject {
-            /** @var string */
-            public $foo = 'abc';
-
-            /** @var bool */
-            public $bar;
-        };
+        $valueObject = new DefaultValuesAreSupported(['bar' => true]);
 
         $this->assertEquals(['foo' => 'abc', 'bar' => true], $valueObject->all());
     }
@@ -77,10 +81,7 @@ class DataTransferObjectTest extends TestCase
     {
         $this->expectException(DataTransferObjectError::class);
 
-        new class(['foo' => null]) extends DataTransferObject {
-            /** @var string */
-            public $foo;
-        };
+        new NullIsAllowedOnlyIfExplicitlySpecified(['foo' => null]);
     }
 
     /** @test */
@@ -88,16 +89,14 @@ class DataTransferObjectTest extends TestCase
     {
         $this->expectException(DataTransferObjectError::class);
 
-        new class(['bar' => null]) extends DataTransferObject {
-        };
+        new UnknownPropertiesThrowAnError(['bar' => null]);
     }
 
     /** @test */
     public function unknown_properties_show_a_comprehensive_error_message()
     {
         try {
-            new class(['foo' => null, 'bar' => null]) extends DataTransferObject {
-            };
+            new UnknownPropertiesShowAComprehensiveErrorMessage(['foo' => null, 'bar' => null]);
         } catch (DataTransferObjectError $error) {
             $this->assertContains('`foo`', $error->getMessage());
             $this->assertContains('`bar`', $error->getMessage());
@@ -107,13 +106,7 @@ class DataTransferObjectTest extends TestCase
     /** @test */
     public function only_returns_filtered_properties()
     {
-        $valueObject = new class(['foo' => 1, 'bar' => 2]) extends DataTransferObject {
-            /** @var int */
-            public $foo;
-
-            /** @var int */
-            public $bar;
-        };
+        $valueObject = new OnlyReturnsFilteredProperties(['foo' => 1, 'bar' => 2]);
 
         $this->assertEquals(['foo' => 1], $valueObject->only('foo')->toArray());
     }
@@ -121,13 +114,7 @@ class DataTransferObjectTest extends TestCase
     /** @test */
     public function except_returns_filtered_properties()
     {
-        $valueObject = new class(['foo' => 1, 'bar' => 2]) extends DataTransferObject {
-            /** @var int */
-            public $foo;
-
-            /** @var int */
-            public $bar;
-        };
+        $valueObject = new ExceptReturnsFilteredProperties(['foo' => 1, 'bar' => 2]);
 
         $this->assertEquals(['foo' => 1], $valueObject->except('bar')->toArray());
     }
@@ -135,13 +122,7 @@ class DataTransferObjectTest extends TestCase
     /** @test */
     public function all_returns_all_properties()
     {
-        $valueObject = new class(['foo' => 1, 'bar' => 2]) extends DataTransferObject {
-            /** @var int */
-            public $foo;
-
-            /** @var int */
-            public $bar;
-        };
+        $valueObject = new AllReturnsAllProperties(['foo' => 1, 'bar' => 2]);
 
         $this->assertEquals(['foo' => 1, 'bar' => 2], $valueObject->all());
     }
@@ -149,15 +130,9 @@ class DataTransferObjectTest extends TestCase
     /** @test */
     public function mixed_is_supported()
     {
-        new class(['foo' => 'abc']) extends DataTransferObject {
-            /** @var mixed */
-            public $foo;
-        };
+        new MixedIsSupported(['foo' => 'abc']);
 
-        new class(['foo' => 1]) extends DataTransferObject {
-            /** @var mixed */
-            public $foo;
-        };
+        new MixedIsSupported(['foo' => 1]);
 
         $this->markTestSucceeded();
     }
@@ -165,10 +140,7 @@ class DataTransferObjectTest extends TestCase
     /** @test */
     public function float_is_supported()
     {
-        new class(['foo' => 5.1]) extends DataTransferObject {
-            /** @var float */
-            public $foo;
-        };
+        new FloatIsSupported(['foo' => 5.1]);
 
         $this->markTestSucceeded();
     }
@@ -176,40 +148,25 @@ class DataTransferObjectTest extends TestCase
     /** @test */
     public function classes_are_supported()
     {
-        new class(['foo' => new DummyClass()]) extends DataTransferObject {
-            /** @var \Spatie\DataTransferObject\Tests\TestClasses\DummyClass */
-            public $foo;
-        };
+        new ClassesAreSupported(['foo' => new DummyClass()]);
 
         $this->markTestSucceeded();
 
         $this->expectException(DataTransferObjectError::class);
 
-        new class(['foo' => new class() {
-        },
-        ]) extends DataTransferObject
-        {
-            /** @var \Spatie\DataTransferObject\Tests\TestClasses\DummyClass */
-            public $foo;
-        };
+        new ClassesAreSupported(['foo' => new OtherClass()]);
     }
 
     /** @test */
     public function generic_collections_are_supported()
     {
-        new class(['foo' => [new DummyClass()]]) extends DataTransferObject {
-            /** @var \Spatie\DataTransferObject\Tests\TestClasses\DummyClass[] */
-            public $foo;
-        };
+        new GenericCollectionsAreSupported(['foo' => [new DummyClass()]]);
 
         $this->markTestSucceeded();
 
         $this->expectException(DataTransferObjectError::class);
 
-        new class(['foo' => [new OtherClass()]]) extends DataTransferObject {
-            /** @var \Spatie\DataTransferObject\Tests\TestClasses\DummyClass[] */
-            public $foo;
-        };
+        new GenericCollectionsAreSupported(['foo' => [new OtherClass()]]);
     }
 
     /** @test */
@@ -217,10 +174,7 @@ class DataTransferObjectTest extends TestCase
     {
         $this->expectException(DataTransferObjectError::class);
 
-        new class(['foo' => [null]]) extends DataTransferObject {
-            /** @var string[] */
-            public $foo;
-        };
+        new AnExceptionIsThrownForAGenericCollectionOfNull(['foo' => [null]]);
     }
 
     /** @test */
@@ -228,31 +182,19 @@ class DataTransferObjectTest extends TestCase
     {
         $this->expectException(DataTransferObjectError::class);
 
-        new class([]) extends DataTransferObject {
-            /** @var string */
-            public $foo;
-        };
+        new AnExceptionIsThrownWhenPropertyWasNotInitialised([]);
     }
 
     /** @test */
     public function empty_type_declaration_allows_everything()
     {
-        new class(['foo' => new DummyClass()]) extends DataTransferObject {
-            public $foo;
-        };
+        new EmptyTypeDeclarationAllowsEverything(['foo' => new DummyClass()]);
 
-        new class(['foo' => null]) extends DataTransferObject {
-            public $foo;
-        };
+        new EmptyTypeDeclarationAllowsEverything(['foo' => null]);
 
-        new class(['foo' => null]) extends DataTransferObject {
-            /** This is a variable without type declaration */
-            public $foo;
-        };
+        new EmptyTypeDeclarationAllowsEverything(['foo' => null]);
 
-        new class(['foo' => 1]) extends DataTransferObject {
-            public $foo;
-        };
+        new EmptyTypeDeclarationAllowsEverything(['foo' => 1]);
 
         $this->markTestSucceeded();
     }
@@ -288,10 +230,7 @@ class DataTransferObjectTest extends TestCase
 
         $this->assertEquals(['name' => 'child'], $object->toArray()['child']);
 
-        $valueObject = new class(['childs' => [new NestedChild(['name' => 'child'])]]) extends DataTransferObject {
-            /** @var Spatie\DataTransferObject\Tests\TestClasses\NestedChild[] */
-            public $childs;
-        };
+        $valueObject = new NestedDtosAreRecursiveCastFromObjectTAarrayWhenToArray(['childs' => [new NestedChild(['name' => 'child'])]]);
 
         $this->assertEquals(['name' => 'child'], $valueObject->toArray()['childs'][0]);
     }
@@ -328,10 +267,7 @@ class DataTransferObjectTest extends TestCase
             ],
         ];
 
-        $object = new class($data) extends DataTransferObject {
-            /** @var \Spatie\DataTransferObject\Tests\TestClasses\NestedParentOfMany[] */
-            public $children;
-        };
+        $object = new NestedArrayDtosAreRecursiveCastToArraysOfDtos($data);
 
         $this->assertEquals(['name' => 'grandchild'], $object->toArray()['children'][0]['children'][0]);
     }
@@ -349,10 +285,7 @@ class DataTransferObjectTest extends TestCase
     /** @test */
     public function nested_array_dtos_can_be_nullable()
     {
-        $object = new class(['children' => null]) extends DataTransferObject {
-            /** @var Spatie\DataTransferObject\Tests\TestClasses\NestedChild[]|null */
-            public $children;
-        };
+        $object = new NestedArrayDtosCanBeNullable(['children' => null]);
 
         $this->assertNull($object->children);
     }
@@ -360,10 +293,7 @@ class DataTransferObjectTest extends TestCase
     /** @test */
     public function empty_dto_objects_can_be_cast_using_arrays()
     {
-        $object = new class(['child' => []]) extends DataTransferObject {
-            /** @var \Spatie\DataTransferObject\Tests\TestClasses\EmptyChild */
-            public $child;
-        };
+        $object = new EmptyDtoObjectsCanBeCastUsingArrays(['child' => []]);
 
         $this->assertInstanceOf(EmptyChild::class, $object->child);
     }
