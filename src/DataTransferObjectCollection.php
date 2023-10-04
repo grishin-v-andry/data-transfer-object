@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Spatie\DataTransferObject;
 
 use Iterator;
@@ -19,21 +17,36 @@ abstract class DataTransferObjectCollection implements
     /** @var int */
     protected $position = 0;
 
+    /**
+     * @param array $collection
+     */
     public function __construct(array $collection = [])
     {
         $this->collection = $collection;
     }
 
+    /**
+     * @return mixed
+     */
     public function current()
     {
         return $this->collection[$this->position];
     }
 
+    /**
+     * @param $offset
+     * @return mixed|null
+     */
     public function offsetGet($offset)
     {
         return $this->collection[$offset] ?? null;
     }
 
+    /**
+     * @param $offset
+     * @param $value
+     * @return void
+     */
     public function offsetSet($offset, $value)
     {
         if (is_null($offset)) {
@@ -43,37 +56,60 @@ abstract class DataTransferObjectCollection implements
         }
     }
 
-    public function offsetExists($offset): bool
+    /**
+     * @param $offset
+     * @return bool
+     */
+    public function offsetExists($offset)
     {
         return array_key_exists($offset, $this->collection);
     }
 
+    /**
+     * @param $offset
+     * @return void
+     */
     public function offsetUnset($offset)
     {
         unset($this->collection[$offset]);
     }
 
+    /**
+     * @return void
+     */
     public function next()
     {
         $this->position++;
     }
 
-    public function key(): int
+    /**
+     * @return int
+     */
+    public function key()
     {
         return $this->position;
     }
 
-    public function valid(): bool
+    /**
+     * @return bool
+     */
+    public function valid()
     {
         return array_key_exists($this->position, $this->collection);
     }
 
+    /**
+     * @return void
+     */
     public function rewind()
     {
         $this->position = 0;
     }
 
-    public function toArray(): array
+    /**
+     * @return array
+     */
+    public function toArray()
     {
         $collection = $this->collection;
 
@@ -91,12 +127,18 @@ abstract class DataTransferObjectCollection implements
         return $collection;
     }
 
-    public function items(): array
+    /**
+     * @return array
+     */
+    public function items()
     {
         return $this->collection;
     }
 
-    public function count(): int
+    /**
+     * @return int
+     */
+    public function count()
     {
         return count($this->collection);
     }

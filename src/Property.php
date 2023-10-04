@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Spatie\DataTransferObject;
 
 use ReflectionProperty;
@@ -33,11 +31,22 @@ class Property extends ReflectionProperty
     /** @var array */
     protected $arrayTypes = [];
 
+    /**
+     * @param DataTransferObject $valueObject
+     * @param ReflectionProperty $reflectionProperty
+     * @return self
+     * @throws \ReflectionException
+     */
     public static function fromReflection(DataTransferObject $valueObject, ReflectionProperty $reflectionProperty)
     {
         return new self($valueObject, $reflectionProperty);
     }
 
+    /**
+     * @param DataTransferObject $valueObject
+     * @param ReflectionProperty $reflectionProperty
+     * @throws \ReflectionException
+     */
     public function __construct(DataTransferObject $valueObject, ReflectionProperty $reflectionProperty)
     {
         parent::__construct($reflectionProperty->class, $reflectionProperty->getName());
@@ -47,6 +56,10 @@ class Property extends ReflectionProperty
         $this->resolveTypeDefinition();
     }
 
+    /**
+     * @param $value
+     * @return void
+     */
     public function set($value)
     {
         if (is_array($value)) {
@@ -62,21 +75,33 @@ class Property extends ReflectionProperty
         $this->valueObject->{$this->getName()} = $value;
     }
 
-    public function getTypes(): array
+    /**
+     * @return array
+     */
+    public function getTypes()
     {
         return $this->types;
     }
 
-    public function getFqn(): string
+    /**
+     * @return string
+     */
+    public function getFqn()
     {
         return "{$this->getDeclaringClass()->getName()}::{$this->getName()}";
     }
 
-    public function isNullable(): bool
+    /**
+     * @return bool
+     */
+    public function isNullable()
     {
         return $this->isNullable;
     }
 
+    /**
+     * @return void
+     */
     protected function resolveTypeDefinition()
     {
         $docComment = $this->getDocComment();
@@ -105,7 +130,11 @@ class Property extends ReflectionProperty
         $this->isNullable = strpos($varDocComment, 'null') !== false;
     }
 
-    protected function isValidType($value): bool
+    /**
+     * @param $value
+     * @return bool
+     */
+    protected function isValidType($value)
     {
         if (! $this->hasTypeDeclaration) {
             return true;
@@ -126,6 +155,10 @@ class Property extends ReflectionProperty
         return false;
     }
 
+    /**
+     * @param $value
+     * @return mixed|DataTransferObject
+     */
     protected function cast($value)
     {
         $castTo = null;
@@ -147,6 +180,10 @@ class Property extends ReflectionProperty
         return new $castTo($value);
     }
 
+    /**
+     * @param array $values
+     * @return array
+     */
     protected function castCollection(array $values)
     {
         $castTo = null;
@@ -174,7 +211,11 @@ class Property extends ReflectionProperty
         return $casts;
     }
 
-    protected function shouldBeCastToCollection(array $values): bool
+    /**
+     * @param array $values
+     * @return bool
+     */
+    protected function shouldBeCastToCollection(array $values)
     {
         if (empty($values)) {
             return false;
@@ -193,7 +234,12 @@ class Property extends ReflectionProperty
         return true;
     }
 
-    protected function assertTypeEquals(string $type, $value): bool
+    /**
+     * @param string $type
+     * @param $value
+     * @return bool
+     */
+    protected function assertTypeEquals($type, $value)
     {
         if (strpos($type, '[]') !== false) {
             return $this->isValidGenericCollection($type, $value);
@@ -207,7 +253,12 @@ class Property extends ReflectionProperty
             || gettype($value) === (self::$typeMapping[$type] ?? $type);
     }
 
-    protected function isValidGenericCollection(string $type, $collection): bool
+    /**
+     * @param string $type
+     * @param $collection
+     * @return bool
+     */
+    protected function isValidGenericCollection($type, $collection)
     {
         if (! is_array($collection)) {
             return false;

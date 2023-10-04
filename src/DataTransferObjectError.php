@@ -1,21 +1,29 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Spatie\DataTransferObject;
 
-use TypeError;
+use Exception;
 
-class DataTransferObjectError extends TypeError
+class DataTransferObjectError extends Exception
 {
-    public static function unknownProperties(array $properties, string $className): DataTransferObjectError
+    /**
+     * @param array $properties
+     * @param string $className
+     * @return DataTransferObjectError
+     */
+    public static function unknownProperties(array $properties, $className)
     {
         $propertyNames = implode('`, `', $properties);
 
         return new self("Public properties `{$propertyNames}` not found on {$className}");
     }
 
-    public static function invalidType(Property $property, $value): DataTransferObjectError
+    /**
+     * @param Property $property
+     * @param $value
+     * @return DataTransferObjectError
+     */
+    public static function invalidType(Property $property, $value)
     {
         if ($value === null) {
             $value = 'null';
@@ -36,12 +44,20 @@ class DataTransferObjectError extends TypeError
         return new self("Invalid type: expected {$property->getFqn()} to be of type {$expectedTypes}, instead got value `{$value}` ({$currentType}).");
     }
 
-    public static function uninitialized(Property $property): DataTransferObjectError
+    /**
+     * @param Property $property
+     * @return DataTransferObjectError
+     */
+    public static function uninitialized(Property $property)
     {
         return new self("Non-nullable property {$property->getFqn()} has not been initialized.");
     }
 
-    public static function immutable(string $property): DataTransferObjectError
+    /**
+     * @param string $property
+     * @return DataTransferObjectError
+     */
+    public static function immutable($property)
     {
         return new self("Cannot change the value of property {$property} on an immutable data transfer object");
     }
